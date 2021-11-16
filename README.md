@@ -1,4 +1,4 @@
-# :lock: Physical Unclonable Functions for any FPGA
+# :lock: A Physical Unclonable Function for _any_ FPGA
 
 [![license](https://img.shields.io/github/license/stnolting/fpga_puf?longCache=true&style=flat-square)](https://github.com/stnolting/fpga_puf/blob/main/LICENSE)
 
