@@ -19,7 +19,8 @@
 A physical unclonable function (PUF) provides a digital _fingerprint_ that can be used as **unique identifier** for
 security-related applications like authentication. The `fpga_puf` hardware module provides an unclonable 96-bit unique identifier (ID)
 that is defined by the target chip's semiconductor characteristics. It is implemented in a technology-independent
-way that does not use any device-specific macros, primitives or attributes so it can be implemented on _any_ FPGA.
+way that does not use any device-specific macros, primitives or attributes so it can be implemented on _any_ FPGA
+(verified using Intel Quartus Prime, Lattice Radiant and Xilinx Vivado).
 
 :key: The PUF ID is _unique_ for the combination of bitstream and _one_ specific FPGA. The same bitstream
 will lead to a different PUF ID on a different FPGA of same type. If the bitstream of a specific FPGA is changed
@@ -122,8 +123,8 @@ To evaluate this concept and the quality/reliability of the PUF IDs I am using t
 as processor platform. The `fpga_puf` IP module is added to the processor's "Custom Functions Subsystem (CFS)",
 which is a _blank_ template for implementing custom application-specific co-processors.
 
-The setup is synthesized for different FPGAs using different toolchains (like Intel and Lattice). A specific
-bitstream generated and programmed into _several_ FPGAs of the _same_ type to check for chip-specific
+The setup is synthesized for different FPGAs using different toolchains (tested with Intel Quartus Prime, Lattice Radiant and
+Xilinx Vivado). A specific bitstream generated and programmed into _several_ FPGAs of the _same_ type to check for chip-specific
 ID variations. On one chip the ID is generated several times to check if it is "stable over time" and thus, reliable.
 
 ### Setup
@@ -180,8 +181,9 @@ repository: [`sw/neorv32_exe.bin`](https://github.com/stnolting/fpga_puf/blob/ma
 ### ID Results
 
 So far I have tested the PUF module on three Lattice iCE40 UltraPlus FPGAs and four Intel Cyclone IV FPGAs
-(shout-out to [@emb4fun](https://github.com/emb4fun) - thank you for your help!). The ID was generated 8 times
-on each chip to "check" if it is reproducible (drawback: just in a very short time window...).
+(shout-out to [@emb4fun](https://github.com/emb4fun) - thank you for your help!) and just one Xilinx Artix-7
+FPGA. The ID was generated 8 times on each chip to "check" if it is reproducible (drawback: just in a very
+short time window...). The specific FPGA types are shown in section [Hardware Utilization](#Hardware-Utilization).
 
 | FPGA                            | PUF ID ("Fingerprint Key")   |
 |:--------------------------------|:-----------------------------|
@@ -192,6 +194,7 @@ on each chip to "check" if it is reproducible (drawback: just in a very short ti
 | Intel Cyclone IV - **2**        | `0xa726db495a2a8346b30f2000` |
 | Intel Cyclone IV - **3**        | `0x413fe25557311be7f9f5edfb` |
 | Intel Cyclone IV - **4**        | `0xca8ee8dc7945fa60f770e1fa` |
+| Xilinx Artix-7 - **1**          | `0x6faaf93af77cf77fef91fe79` |
 
 
 ### Hardware Utilization
@@ -210,6 +213,14 @@ Mapping results for the custom function subsystem (CFS), the `fpga_puf` module a
 | -fpga_puf:fpga_puf_inst                                    |   198 (102) |       197 (101) |
 | --fpga_puf_cell:\fpga_puf_cell_inst:0:fpga_puf_cell_inst_i |       1 (1) |           1 (1) |
 
+| Xilinx Artix-7 `XC7A35TICSG324-1L` @100MHz                   | Logic Cells | Logic Registers |
+|:-------------------------------------------------------------|------------:|----------------:|
+| neorv32_cfs_inst_true.neorv32_cfs_inst (neorv32_cfs)         |         133 |             328 |
+| -fpga_puf_inst (fpga_puf)                                    |         133 |             293 |
+| --fpga_puf_cell_inst[0].fpga_puf_cell_inst_i (fpga_puf_cell) |           1 |  2 (FF + Latch) |
+
+:information_source: Xilinx Vivado can detect the PUF cell's latch and used a FF primitive (which also provides
+a latch mode) for implementation. This does not compromise the functionality of the PUF.
 
 ## Summary
 
