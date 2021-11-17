@@ -173,7 +173,7 @@ Run 7 ID: 0x37c0480063021011988c0095
 Test completed.
 ```
 
-:floppy_disk: A pre-compiled NEORV32 executable of the test is also available in this
+:floppy_disk: A pre-compiled NEORV32 executable of this test program is also available in this
 repository: [`sw/neorv32_exe.bin`](https://github.com/stnolting/fpga_puf/blob/main/sw/neorv32_exe.bin)
 (compiled for a minimal `rv32` NEORV32 CPU)
 
