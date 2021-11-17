@@ -13,6 +13,7 @@
    * [Reliability](#Reliability)
    * [Hardware Utilization](#Hardware-Utilization)
 * [Summary](#Summary)
+* [TODO](#TODO)
 
 
 ## Introduction
@@ -35,7 +36,7 @@ will lead to a different PUF ID on a different FPGA of same type. If the bitstre
 * [x] secure and reliable
 
 :loudspeaker: This is an ongoing research / proof-of-concept project. Feedback from the community is highly appreciated
-(see notes in section ["Summary"](#Summary))!
+(see notes in section ["TODO"](#TODO))!
 
 
 ## Theory of Operation
@@ -281,7 +282,7 @@ ID sampling time is increased by one clock cycle.
 have ported the design on another FPGA you can open a [pull request](https://github.com/stnolting/fpga_puf/pulls)
 and add your results.
 
-**TODOs and Ideas**
+## TODO
 
 * test more FPGAs
 * check stability in a controlled environment (e.g. temperature chamber)
