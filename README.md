@@ -1,6 +1,7 @@
 # :closed_lock_with_key: A Physical Unclonable Function for _any_ FPGA
 
-[![license](https://img.shields.io/github/license/stnolting/fpga_puf?longCache=true&style=flat-square)](https://github.com/stnolting/fpga_puf/blob/main/LICENSE)
+[![GitHub](https://img.shields.io/github/license/stnolting/fpga_puf)](https://github.com/stnolting/fpga_puf/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/428800193.svg)](https://zenodo.org/badge/latestdoi/428800193)
 
 * [Introduction](#Introduction)
 * [Theory of Operation](#Theory-of-Operation)
