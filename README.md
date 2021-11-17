@@ -149,7 +149,24 @@ the busy state of the `fpga_puf` module (`busy_o`).
 provides the function prototypes, a PUF ID data type and also the NEORV32 CFS register mappings and bit definitions.
 
 The PUF test program ([`sw/main.c`](https://github.com/stnolting/fpga_puf/blob/main/sw/main.c)) is used to sample
-the chip's PUF ID and transmit it via UART to a terminal program.
+the chip's PUF ID and transmit it via UART to a terminal program:
+
+```
+Physical Unclonable Functions <fpga_puf> Test
+PUF implemented as NEORV32 Custom Functions Subsystem (CFS)
+
+Press any key to start PUF test (8 runs with 4096 samples each).
+Starting test...
+Run 0 ID: 0x37c0480063021011988c0095
+Run 1 ID: 0x37c0480063021011988c0095
+Run 2 ID: 0x37c0480063021011988c0095
+Run 3 ID: 0x37c0480063021011988c0095
+Run 4 ID: 0x37c0480063021011988c0095
+Run 5 ID: 0x37c0480063021011988c0095
+Run 6 ID: 0x37c0480063021011988c0095
+Run 7 ID: 0x37c0480063021011988c0095
+Test completed.
+```
 
 ### ID Results
 
