@@ -225,6 +225,7 @@ Run 43374: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9435beb156eae31b, B=0xbfbe3
 Run 43375: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9425beb156caeb1b, B=0xbfbe3bdcb421beb156cae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=20, H_max(I,A)=23
 Run 43376: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9425beb156eaeb1b, B=0xbfbe3bfcb021beb156eae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=21, H_max(I,A)=23
 Run 43377: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9021beb156caeb1b, B=0xbfbe3bdc9425beb156cae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=18, H_max(I,A)=23
+...
 ```
 
 This very first test was run for approx. half an hours making ~20 runs per second.
