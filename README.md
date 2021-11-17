@@ -229,7 +229,7 @@ a very long time (days? "aging?") and different environment conditions (temperat
 the ID shows single-bit flips over time in one or two bits. A better post-processing algorithm
 should be able to compensate that.
 
-:loudspeaker: If you have any ideas how to improve reliability feel free to open a new
-[issue](https://github.com/stnolting/fpga_puf/issues). I also happy to get more data, so if you
+:loudspeaker: If you have any kind of ideas or feedback (for example how to improve reliability) feel free to open a new
+[issue](https://github.com/stnolting/fpga_puf/issues). I am also happy to get more data, so if you
 have ported the design on another FPGA you can open a [pull request](https://github.com/stnolting/fpga_puf/pulls)
-and add your data.
+and add your results.
