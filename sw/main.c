@@ -50,16 +50,17 @@
 /**********************************************************************//**
  * Prototypes
  **************************************************************************/
-void get_puf_id(uint32_t samples, uint32_t hyst_hi, uint32_t hyst_lo, puf_data_t *puf_data);
+void get_puf_id(puf_data_t *puf_data);
+uint32_t hamming_dist(puf_data_t id_a, puf_data_t id_b);
+
+void simple_test(void);
+void long_test_raw(void);
 
 
 /**********************************************************************//**
  * Main function
  **************************************************************************/
 int main() {
-
-  int i;
-  puf_data_t puf_data;
 
   // initialize the neorv32 runtime environment
   neorv32_rte_setup();
@@ -75,14 +76,26 @@ int main() {
     return 1;
   }
 
-  neorv32_uart0_printf("Press any key to start PUF test (%u runs with %u samples each).\n", NUM_RUNS, SAMPLES);
-  while (neorv32_uart0_char_received() == 0);
+  while(1) {
+    neorv32_uart0_printf("Select test mode:\n");
+    neorv32_uart0_printf(" a - run quick test (execute %u runs with %u ID samples each).\n", NUM_RUNS, SAMPLES);
+    neorv32_uart0_printf(" b - compute hamming distance of raw IDs\n");
 
-  neorv32_uart0_printf("Starting test...\n");
+    char c = neorv32_uart0_getc();
+    if ((c == 'a') || (c == 'b')) {
+      neorv32_uart0_printf("starting test...\n");
+    }
+    else {
+       neorv32_uart0_printf("invalid test selected!\n");
+       continue;
+    }
 
-  for(i=0; i<NUM_RUNS; i++) {
-    get_puf_id((uint32_t)SAMPLES, (uint32_t)HYST_HI, (uint32_t)HYST_LO, &puf_data);
-    neorv32_uart0_printf("Run %u ID: 0x%x%x%x\n", i, puf_data.id[0], puf_data.id[1], puf_data.id[2]);
+    if (c == 'a') {
+      simple_test();
+    }
+    else if (c == 'b') {
+      long_test_raw();
+    }
   }
 
   neorv32_uart0_printf("Test completed.\n");
@@ -96,12 +109,9 @@ int main() {
  *
  * @note This function also performs "post-processing" of the raw PUF data.
  *
- * @param sampled Number of RAW PUF IDs to sample for computing the actual ID.
- * @param hyst_hi Min. number of times bit n in all samples has to be set to be identified as '1'
- * @param hyst_lo Max. number of times bit n in all samples has to be clear to be identified as '0'
  * @param[in,out] puf_data 3x 32-bit array for the 96-bit raw ID (#puf_data_t);
  **************************************************************************/
-void get_puf_id(uint32_t samples, uint32_t hyst_hi, uint32_t hyst_lo, puf_data_t *puf_data) {
+void get_puf_id(puf_data_t *puf_data) {
 
   uint32_t x, y;
   puf_data_t puf_raw;
@@ -115,7 +125,7 @@ void get_puf_id(uint32_t samples, uint32_t hyst_hi, uint32_t hyst_lo, puf_data_t
   }
 
   // count how often each bit of the 96-bit ID across all samples
-  for (x=0; x<SAMPLES; x++) {
+  for (x=0; x<(uint32_t)SAMPLES; x++) {
 
     // get 96-bit raw ID sample
     fpga_puf_get_raw(&puf_raw);
@@ -169,7 +179,7 @@ void get_puf_id(uint32_t samples, uint32_t hyst_hi, uint32_t hyst_lo, puf_data_t
 
     // bit valid - hysteresis decision
     // bit is only valid if it is "set most of the times" or "cleared most of the times"
-    if ((cnt[x] >= hyst_hi) || (cnt[x] <= hyst_lo)) {
+    if ((cnt[x] >= (uint32_t)HYST_HI) || (cnt[x] <= (uint32_t)HYST_LO)) {
       tmp = 1; // bit valid
     }
     else {
@@ -192,3 +202,115 @@ void get_puf_id(uint32_t samples, uint32_t hyst_hi, uint32_t hyst_lo, puf_data_t
   puf_data->id[1] = res[1] & val[1];
   puf_data->id[2] = res[2] & val[2];
 }
+
+
+/**********************************************************************//**
+ * Compute Hamming distance of two IDs.
+ *
+ * @param[int] id_a 3x 32-bit array for first ID (#puf_data_t);
+ * @param[int] id_b 3x 32-bit array for second ID (#puf_data_t);
+ * @param return Hamming distance (0..96)
+ **************************************************************************/
+uint32_t hamming_dist(puf_data_t id_a, puf_data_t id_b) {
+
+  uint32_t i, tmp;
+  uint32_t cnt = 0;
+
+  for (i=0; i<96; i++) {
+    if (i>=64) {
+      tmp = id_a.id[2] ^ id_b.id[2];
+    }
+    else if (i>=32) {
+      tmp = id_a.id[1] ^ id_b.id[1];
+    }
+    else {
+      tmp = id_a.id[0] ^ id_b.id[0];
+    }
+    tmp >>= (i % 32);
+    if (tmp & 1) {
+      cnt++;
+    }
+  }
+
+  return cnt;
+}
+
+
+/**********************************************************************//**
+ * Simple test: Compute NUM_RUNS pre-processed IDs.
+ **************************************************************************/
+void simple_test(void) {
+
+  int i;
+
+  for(i=0; i<NUM_RUNS; i++) {
+    puf_data_t puf_data;
+    get_puf_id(&puf_data);
+    neorv32_uart0_printf("Run %u ID: 0x%x%x%x\n", i, puf_data.id[0], puf_data.id[1], puf_data.id[2]);
+  }
+}
+
+
+/**********************************************************************//**
+ * Long test: Compute Hamming distance of two consecutive raw IDs
+ **************************************************************************/
+void long_test_raw(void) {
+
+  int i;
+  puf_data_t id_init, id_a, id_b;
+  uint32_t h_rel_tmp;
+  uint32_t h_rel_max = 0;
+  uint32_t h_abs_tmp;
+  uint32_t h_abs_max = 0;
+  puf_data_t noisy_bits;
+  puf_data_t zero_id;
+  uint32_t popcount;
+
+  fpga_puf_get_raw(&id_init); // initial ID
+
+  zero_id.id[0] = 0;
+  zero_id.id[1] = 0;
+  zero_id.id[2] = 0;
+
+  i = 0;
+  noisy_bits.id[0] = 0;
+  noisy_bits.id[1] = 0;
+  noisy_bits.id[2] = 0;
+
+  while(1){
+     if (neorv32_uart0_char_received()) {
+       return;
+     }
+
+    fpga_puf_get_raw(&id_a);
+    fpga_puf_get_raw(&id_b);
+
+    // compute Hamming distance against initial sample
+    h_abs_tmp = hamming_dist(id_a, id_init);
+    if (h_abs_tmp > h_abs_max) {
+      h_abs_max = h_abs_tmp;
+    }
+
+    // compute Hamming distance of two consecutive pre-processed ID samples
+    h_rel_tmp = hamming_dist(id_a, id_b);
+    if (h_rel_tmp > h_rel_max) {
+      h_rel_max = h_rel_tmp;
+    }
+
+    // accumulate noisy bits
+    noisy_bits.id[0] |= (id_init.id[0] ^ id_a.id[0]) | (id_init.id[0] ^ id_b.id[0]);
+    noisy_bits.id[1] |= (id_init.id[1] ^ id_a.id[1]) | (id_init.id[1] ^ id_b.id[1]);
+    noisy_bits.id[2] |= (id_init.id[2] ^ id_a.id[2]) | (id_init.id[2] ^ id_b.id[2]);
+    popcount = hamming_dist(noisy_bits, zero_id);
+
+    neorv32_uart0_printf("Run %i: ", i);
+    neorv32_uart0_printf("I=0x%x%x%x, ", id_init.id[2], id_init.id[1], id_init.id[0]);
+    neorv32_uart0_printf("A=0x%x%x%x, ", id_a.id[2], id_a.id[1], id_a.id[0]);
+    neorv32_uart0_printf("B=0x%x%x%x - ", id_b.id[2], id_b.id[1], id_b.id[0]);
+    neorv32_uart0_printf("F=0x%x%x%x (%u) - ", noisy_bits.id[2], noisy_bits.id[1], noisy_bits.id[0], popcount);
+    neorv32_uart0_printf("H(A,B)=%u, H_max(A,B)=%u - ", h_rel_tmp, h_rel_max);
+    neorv32_uart0_printf("H(I,A)=%u, H_max(I,A)=%u\n", h_abs_tmp, h_abs_max);
+    i++;
+  }
+}
+
