@@ -1,5 +1,6 @@
 ~*
 *.bin
+!*_exe.bin
 *.o
 *.elf
 *.asm
