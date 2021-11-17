@@ -11,13 +11,13 @@
    * [Setup](#Setup)
    * [ID Results](#ID-Results)
    * [Hardware Utilization](#Hardware-Utilization)
-   * [Summary](#Summary)
+* [Summary](#Summary)
 
 
 ## Introduction
 
 A physical unclonable function (PUF) provides a digital _fingerprint_ that can be used as **unique identifier** for
-security-related applications. The `fpga_puf` hardware module provides an unclonable 96-bit unique identifier (ID)
+security-related applications like authentication. The `fpga_puf` hardware module provides an unclonable 96-bit unique identifier (ID)
 that is defined by the target chip's semiconductor characteristics. It is implemented in a technology-independent
 way that does not use any device-specific macros, primitives or attributes so it can be implemented on _any_ FPGA.
 
@@ -173,6 +173,10 @@ Run 7 ID: 0x37c0480063021011988c0095
 Test completed.
 ```
 
+:floppy_disk: A pre-compiled NEORV32 executable of the test is also available in this
+repository: [`sw/neorv32_exe.bin`](https://github.com/stnolting/fpga_puf/blob/main/sw/neorv32_exe.bin)
+(compiled for a minimal `rv32` NEORV32 CPU)
+
 ### ID Results
 
 So far I have tested the PUF module on three Lattice iCE40 UltraPlus FPGAs and four Intel Cyclone IV FPGAs
@@ -207,7 +211,7 @@ Mapping results for the custom function subsystem (CFS), the `fpga_puf` module a
 | --fpga_puf_cell:\fpga_puf_cell_inst:0:fpga_puf_cell_inst_i |       1 (1) |           1 (1) |
 
 
-### Summary
+## Summary
 
 The PUF IDs are unique for each FPGA and are reproducible. However, I did not test the PUF over
 a very long time (days? "aging?") and different environment conditions (temperature?) yet. On some FPGAs
