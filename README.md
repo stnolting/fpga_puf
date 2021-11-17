@@ -219,8 +219,8 @@ Mapping results for the custom function subsystem (CFS), the `fpga_puf` module a
 | -fpga_puf_inst (fpga_puf)                                    |         133 |             293 |
 | --fpga_puf_cell_inst[0].fpga_puf_cell_inst_i (fpga_puf_cell) |           1 |  2 (FF + Latch) |
 
-:information_source: Xilinx Vivado can detect the PUF cell's latch and used a FF primitive (which also provides
-a latch mode) for implementation. This does not compromise the functionality of the PUF.
+:information_source: Xilinx Vivado can detect the PUF cell's latch and infers a FF primitive, which also provides
+a latch mode. This does not compromise the functionality of the PUF.
 
 ## Summary
 
