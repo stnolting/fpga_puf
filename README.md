@@ -10,6 +10,7 @@
 * [Evaluation](#Evaluation)
    * [Setup](#Setup)
    * [ID Results](#ID-Results)
+   * [Reliability](#Reliability)
    * [Hardware Utilization](#Hardware-Utilization)
 * [Summary](#Summary)
 
@@ -112,7 +113,6 @@ entity fpga_puf is
     id_o   : out std_ulogic_vector(95 downto 0) -- PUF ID (valid after sampling is done)
   );
 end fpga_puf;
-);
 ```
 
 :warning: Note that the PUF cannot be simulated due to it's combinatorial loops.
@@ -196,6 +196,45 @@ short time window...). The specific FPGA types are shown in section [Hardware Ut
 | Intel Cyclone IV - **4**        | `0xca8ee8dc7945fa60f770e1fa` |
 | Xilinx Artix-7 - **1**          | `0x6faaf93af77cf77fef91fe79` |
 
+So far, the IDs are _unique_ for each tested FPGA!
+
+### Reliability
+
+**:construction: work in progress :construction:**
+
+A long-time test is used to sample and check _raw_ IDs (not the pre-processed ones) for _stability over time_.
+Note that my setup is placed in pretty stable environment conditions.
+
+The test generates an _initital_ ID `I` right at the beginning of execution. In an endless loop two consecutive
+IDs `A` and `B` are sampled (a single "Run"). To evaluate the the "instability" the Hamming distance (number of bits that are
+not identical across two samples) is computed. This test computes the _relative_ Hamming distance of the two
+consecutive samples `A` and `B` (= `H(A,B)`) and also the relative Hamming distance between the initial sample
+and sample `A` (= `H(I,A)`) from the current run. Furthermore, the maximum ob both distances is computed over
+all runs (`H_max(A,B)` and `H_max(I,A)`).
+
+To identify _noisy bits_ an "accumulated bit-change-mask" `F` is computed. This mask is computed for every run
+by XOR-ing the obtained samples `A` and `B` with the initial ID `I`. The mask from a run is OR-ed with the mask from
+the previous run to accumulate the noisy bits over time.
+
+Cut-out of the test log:
+```
+...
+Run 43373: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9423beb156cae31b, B=0xbfbe3bfcb021beb156cae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=3, H_max(A,B)=9 - H(I,A)=19, H_max(I,A)=23
+Run 43374: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9435beb156eae31b, B=0xbfbe3bfcb431beb156eae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=2, H_max(A,B)=9 - H(I,A)=21, H_max(I,A)=23
+Run 43375: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9425beb156caeb1b, B=0xbfbe3bdcb421beb156cae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=20, H_max(I,A)=23
+Run 43376: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9425beb156eaeb1b, B=0xbfbe3bfcb021beb156eae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=21, H_max(I,A)=23
+Run 43377: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9021beb156caeb1b, B=0xbfbe3bdc9425beb156cae31b - F=0x6038be24ac1e83c080214860 (33) - H(A,B)=4, H_max(A,B)=9 - H(I,A)=18, H_max(I,A)=23
+```
+
+This very first test was run for approx. half an hours making ~20 runs per second.
+It shows a maximal Hamming distance of 23 bits while 33 bits (`F`) tend to be noisy (compared to the initial ID `I`
+sampled once right at the beginning of the test.) The number of noisy bits increases slowly over time, probably
+because of increasing chip temperature. It tends to increase slower over time, so there might be a saturation at some point.
+The temperature of the PUF cells is most important because that impacts the oscillator frequencies.
+The PUF cells heat up due to the _continuous_ PUF operation.
+
+The PUF from this test setup provides 96-33=**63** bits that seem to be stable over the observed time.
+This also means that the usable key space is reduced (63-bit instead of 96-bit).
 
 ### Hardware Utilization
 
@@ -217,19 +256,38 @@ Mapping results for the custom function subsystem (CFS), the `fpga_puf` module a
 |:-------------------------------------------------------------|------------:|----------------:|
 | neorv32_cfs_inst_true.neorv32_cfs_inst (neorv32_cfs)         |         133 |             328 |
 | -fpga_puf_inst (fpga_puf)                                    |         133 |             293 |
-| --fpga_puf_cell_inst[0].fpga_puf_cell_inst_i (fpga_puf_cell) |           1 |  2 (FF + Latch) |
+| --fpga_puf_cell_inst[0].fpga_puf_cell_inst_i (fpga_puf_cell) |           1 |  2 (Latch + FF) |
 
 :information_source: Xilinx Vivado can detect the PUF cell's latch and infers a FF primitive, which also provides
 a latch mode. This does not compromise the functionality of the PUF.
 
 ## Summary
 
-The PUF IDs are unique for each FPGA and are reproducible. However, I did not test the PUF over
-a very long time (days? "aging?") and different environment conditions (temperature?) yet. On some FPGAs
-the ID shows single-bit flips over time in one or two bits. A better post-processing algorithm
-should be able to compensate that.
+The PUF IDs are unique for each FPGA and can be successfully implemented on different FPGAs (Xilinx, Intel, Lattice).
+
+The **raw PUF ID** is only partly reproducible, because some bits tend to be quite noisy (see
+results above).) A better post-processing algorithm using error-correction codes should be able to compensate for that.
+This is **work in progress**.
+
+The latest test showed that there is a certain number of bits that are quite noisy so they cannot be used to determine
+the PUF IF. Obviously, this reduces the maximum key space (for example only 63-bit of the 96-bit ID are usable). To circumvent this,
+the PUF can be made arbitrarily wide (for example providing a 256-bit raw ID). Of course this will also introduce additional
+unusable noisy bits, but we expect that the percentage of noisy bits within the PUF ID is a device-specific constant.
+Each additional PUF ID bit adds 2 FFs (one for the SREG and one for the PUFF cell) and 1 LUT. For each additional bit the
+ID sampling time is increased by one clock cycle.
 
 :loudspeaker: If you have any kind of ideas or feedback (for example how to improve reliability) feel free to open a new
 [issue](https://github.com/stnolting/fpga_puf/issues). I am also happy to get more data, so if you
 have ported the design on another FPGA you can open a [pull request](https://github.com/stnolting/fpga_puf/pulls)
 and add your results.
+
+**TODOs and Ideas**
+
+* test more FPGAs
+* check stability in a controlled environment (e.g. temperature chamber)
+* evaluate more sophisticated post-processing algorithms
+* sample more data from more long-time test
+  * faulty bits over time (and temperature)
+  * hamming distance over time (and temperature)
+  * ...
+* to be continued...
