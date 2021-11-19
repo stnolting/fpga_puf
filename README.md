@@ -1,6 +1,6 @@
 # :closed_lock_with_key: A Physical Unclonable Function for _any_ FPGA
 
-[![GitHub](https://img.shields.io/github/license/stnolting/fpga_puf)](https://github.com/stnolting/fpga_puf/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/stnolting/fpga_puf)](https://github.com/stnolting/fpga_puf/blob/main/LICENSE)
 [![DOI](https://zenodo.org/badge/428800193.svg)](https://zenodo.org/badge/latestdoi/428800193)
 
 * [Introduction](#Introduction)
@@ -33,7 +33,7 @@ will lead to a different PUF ID on a different FPGA of same type. If the bitstre
 * [x] technology-, vendor- and platform-agnostic implementation
 * [x] easy to use
 * [x] tiny hardware footprint (less than 200 LUTs)
-* [x] secure and reliable
+* [ ] secure and reliable (:construction: work-in-progress)
 
 :loudspeaker: This is an ongoing research / proof-of-concept project. Feedback from the community is highly appreciated
 (see notes in section ["TODO"](#TODO))!
@@ -66,7 +66,9 @@ least significant bit that travels throughout the whole shift register chain dur
 latch control) are connected to this shift register. Each shift register bit `i` controls the reset of PUF cell
 `i` and the latch control of PUF cell `i+1`. Thus, a cell's reset is active for one clock cycle. In the next clock
 cycle the cell's latch is opened for exactly one clock cycle allowing the oscillator to run. In the next clock cycle
-the latch is closed again and has captured the oscillator's last state.
+the latch is closed again and has captured the oscillator's last state. By this scheme only one oscillator is active
+at a time reducing potential distortion by oscillator cross-talk (i.e. the oscillation of one osc. affect the
+oscillations of another osc.).
 
 When the single one-bit reaches the most significant bit (bit 96) of the shift register the sampling process is
 completed and the latch states are sampled into a register that provides the obtained _raw_ PUF ID.
@@ -96,7 +98,7 @@ upper hysteresis threshold define an _uncertain_ band between them. For the fina
 into this uncertainty band are masked to be always zero.
 
 My post-processing concept can be found in [`sw/main.c`](https://github.com/stnolting/fpga_puf/blob/main/sw/main.c). The
-source file provids more-detailed comments.
+source file provides more-detailed comments.
 
 
 ## Top Entity
@@ -230,7 +232,7 @@ Run 43377: I=0x9fae9dd83029bc7156cbe37b, A=0xbfbe3bfc9021beb156caeb1b, B=0xbfbe3
 
 This very first test was run for approx. half an hours making ~20 runs per second.
 It shows a maximal Hamming distance of 23 bits while 33 bits (`F`) tend to be noisy (compared to the initial ID `I`
-sampled once right at the beginning of the test.) The number of noisy bits increases slowly over time, probably
+sampled once right at the beginning of the test). The number of noisy bits increases slowly over time, probably
 because of increasing chip temperature. It tends to increase slower over time, so there might be a saturation at some point.
 The temperature of the PUF cells is most important because that impacts the oscillator frequencies.
 The PUF cells heat up due to the _continuous_ PUF operation.
@@ -268,7 +270,7 @@ a latch mode. This does not compromise the functionality of the PUF.
 The PUF IDs are unique for each FPGA and can be successfully implemented on different FPGAs (Xilinx, Intel, Lattice).
 
 The **raw PUF ID** is only partly reproducible, because some bits tend to be quite noisy (see
-results above).) A better post-processing algorithm using error-correction codes should be able to compensate for that.
+results above). A better post-processing algorithm using error-correction codes should be able to compensate for that.
 This is **work in progress**.
 
 The latest test showed that there is a certain number of bits that are quite noisy so they cannot be used to determine
