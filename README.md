@@ -59,7 +59,7 @@ disturbs all oscillators in the (nearly) same way and has to be computationally 
 Since `fpga_puf` does not use any device-specific attributes or primitives, there is a risk that the synthesis toolchain will
 remove the asynchronous PUF cells or collapse them into a single PUF cell ("optimize away"). Therefore, the design
 uses a shift register to control reset and the latch open/close phase of each cell individually and distributed over time. This concept is
-based on the [NEORV32 TRNG](https://github.com/stnolting/neorv32) and allows a **platform-independent implementation**.
+based on the [neoTRNG True Random Number Generator](https://github.com/stnolting/neoTRNG) and allows a **platform-independent implementation**.
 
 Whenever a new sampling of the PUF ID is started, a 96+1 bit wide shift register. A single '1' is applied to the
 least significant bit that travels throughout the whole shift register chain during operation. The PUF cell's control signals (reset and
@@ -179,7 +179,7 @@ Test completed.
 
 :floppy_disk: A pre-compiled NEORV32 executable of this test program is also available in this
 repository: [`sw/neorv32_exe.bin`](https://github.com/stnolting/fpga_puf/blob/main/sw/neorv32_exe.bin)
-(compiled for a minimal `rv32` NEORV32 CPU)
+(compiled for a minimal `rv32i` NEORV32 CPU)
 
 ### ID Results
 
